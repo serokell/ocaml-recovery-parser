@@ -109,8 +109,14 @@ end = struct
     in
     (bindings, lookup)
 
-  let item_to_actions (st, prod, pos) =
-    normalize_actions (snd (S.solve (Tail (st, prod, pos))))
+    let item_to_actions (st, prod, pos) =
+      if Array.length @@ G.Production.rhs prod == pos then
+        normalize_actions (snd (S.solve (Tail (st, prod, pos))))
+      else
+        let (sym, _, _) = Array.get (G.Production.rhs prod) pos in
+        match sym with
+        | T _  -> normalize_actions [S.Shift sym]
+        | N nt -> normalize_actions (snd (S.solve (Head (st, nt))))
 
   type instr =
     | IRef of int
