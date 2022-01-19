@@ -46,6 +46,9 @@ struct
     type level = (nonterminal * Trace.t) list
     type t = level list
 
+    let compare_by_nontermanal = compare
+    let compare_by_trace_cost (_, tr1) (_, tr2) = compare tr1.cost tr2.cost
+
     let rec merge_level l1 l2 : level = match l1, l2 with
       | [], l -> l
       | l, [] -> l
@@ -62,7 +65,9 @@ struct
       | [], l -> l
       | l, [] -> l
       | (x1 :: l1), (x2 :: l2) ->
-          let x' = merge_level x1 x2 in
+          let x1' = List.sort compare_by_nontermanal x1 in
+          let x2' = List.sort compare_by_nontermanal x2 in
+          let x' = List.sort compare_by_trace_cost @@ merge_level x1' x2' in
           x' :: merge l1 l2
   end
 
@@ -93,6 +98,8 @@ struct
         aux stack pos
     in
     Lr1.tabulate (fun st ->
+        List.map
+        (List.sort State.compare_by_trace_cost) @@
         List.fold_left (fun acc (prod, pos) ->
             if pos = 0 then acc else (
               let cost, _actions = S.solve (S.Tail (st, prod, pos)) in
