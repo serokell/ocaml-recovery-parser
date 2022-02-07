@@ -1,0 +1,17 @@
+(ocamllex lexer)
+
+(menhir 
+  (flags --strict --inspection --table --cmly)
+  (modules parser))
+
+(rule
+ (targets parser_recover.ml)
+ (deps parser.cmly)
+ (action
+  (with-stdout-to %{targets} (run ../menhir-recover/main.exe parser.cmly))))
+
+(executable 
+  (name main)
+  (flags (:standard -w -27 -w -33))
+  (libraries menhirLib ocaml-recovery-parser)
+  (modules Main Parser Lexer Parser_recover))
