@@ -15,7 +15,8 @@ module Make
     (G : GRAMMAR)
     (A : ATTRIBUTES with module G := G)
     (S : SYNTHESIZER with module G := G)
-    (R : RECOVERY with module G := G) :
+    (R1 : RECOVERY with module G := G) 
+    (R2 : RECOVERY with module G := G) :
 sig
   val emit : ?external_tokens:string -> Format.formatter -> unit
 end

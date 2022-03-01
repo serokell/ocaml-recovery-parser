@@ -7,7 +7,6 @@
  *)
 
 open MenhirSdk
-open Recovery_new
 
 let name = ref ""
 let external_tokens = ref None
@@ -85,10 +84,11 @@ module S = Synthesis.Synthesizer(G)(A)
 
 let () = if !verbose then S.report Format.err_formatter
 
-module R = Recover(G)(S)
+module R1 = Recovery_new.Recover(G)(S)
+module R2 = Recovery_custom.Recover(G)(S)
 
 (*let () = if !verbose then R.report Format.err_formatter*)
 
-module E = Emitter.Make(G)(A)(S)(R)
+module E = Emitter.Make(G)(A)(S)(R1)(R2)
 
 let () = E.emit ?external_tokens:!external_tokens Format.std_formatter

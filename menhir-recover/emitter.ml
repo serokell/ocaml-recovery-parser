@@ -22,7 +22,7 @@ type var = int
 module Codesharing
     (G : GRAMMAR)
     (S : SYNTHESIZER with module G := G)
-    (R : RECOVERY with module G := G) :
+    (R1 : RECOVERY with module G := G) :
 sig
 
   type instr =
@@ -31,7 +31,7 @@ sig
     | IReduce of G.production
     | IShift  of G.symbol
 
-  val compile : R.item list -> instr list list * (R.item -> instr list)
+  val compile : R1.item list -> instr list list * (R1.item -> instr list)
 
 end = struct
 
@@ -148,7 +148,8 @@ module Make
     (G : GRAMMAR)
     (A : ATTRIBUTES with module G := G)
     (S : SYNTHESIZER with module G := G)
-    (R : RECOVERY with module G := G) :
+    (R1 : RECOVERY with module G := G) 
+    (R2 : RECOVERY with module G := G)  :
 sig
   val emit : ?external_tokens:string -> Format.formatter -> unit
 end = struct
@@ -213,12 +214,38 @@ end = struct
           Format.fprintf ppf "  | T_%s -> true\n" (G.Terminal.name t));
     Format.fprintf ppf "  | _ -> false\n\n"
 
-  module C = Codesharing(G)(S)(R)
+  module C = Codesharing(G)(S)(R1)
 
   let emit_recoveries ppf =
     let all_cases =
       Lr1.fold (fun st acc ->
-          let {R. cases; _} = R.recover st in
+ let get_cases cases =
+            let cases = List.map (fun (st', items) ->
+                list_last items, Option.fold ~none:(-1) ~some:Lr1.to_int st'
+              ) cases in
+            match group_assoc cases with
+                | [] -> `Nothing
+                | [(instr, _)] -> `One instr
+                | xs -> `Select xs
+          in
+          let cases1 = get_cases (R1.recover st).cases in
+          let cases2 = get_cases (R2.recover st).cases in
+          
+          if cases1 <> cases2 then
+          begin
+            Printf.eprintf "\nState: %d\n" (Lr1.to_int st);
+            let print_item = function
+              | (st, prod, pos) -> Printf.eprintf "(%d, %d, %d)\n" (Lr1.to_int st) (Production.to_int prod) pos in
+            let print = function
+              | `Nothing  -> Printf.eprintf "Nothing\n"
+              | `One item -> Printf.eprintf "One: "; print_item item
+              | `Select l -> Printf.eprintf "Select:\n"; List.iter (fun (item, st) ->  List.iter (fun st -> Printf.eprintf "%d " st) st; Printf.eprintf ":\n"; print_item item) l in
+            Printf.eprintf "new:\n";
+            print cases1;
+            Printf.eprintf "old:\n";
+            print cases2
+          end;
+          let {R1.cases; _} = R1.recover st in
             let cases = List.map (fun (st', items) ->
                 (list_last items),
                 (match st' with None -> -1 | Some st' -> Lr1.to_int st')
@@ -351,5 +378,4 @@ in
     emit_token_of_terminal token_module ppf;
     emit_nullable ppf;
     emit_print_symbol token_module ppf
-
 end
