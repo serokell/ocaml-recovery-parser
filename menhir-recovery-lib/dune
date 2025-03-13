@@ -1,0 +1,9 @@
+; SPDX-FileCopyrightText: 2025 Serokell <https://serokell.io/>
+; SPDX-License-Identifier: MPL-2.0
+
+(library
+ (name menhirRecoveryLib)
+ (public_name ocaml-recovery-parser.menhirRecoveryLib)
+ (wrapped false)
+ (modules MenhirRecoveryLib)
+ (libraries menhirLib menhirSdk custom_compiler_libs))

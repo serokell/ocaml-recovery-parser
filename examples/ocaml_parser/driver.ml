@@ -169,8 +169,8 @@ let dump_tokens tokens =
 
 module P = Raw_parser
 module I = P.MenhirInterpreter
-module Printer = Merlin_recovery.DummyPrinter (I)
-(* module Printer = Merlin_recovery.MakePrinter ( *)
+module Printer = MenhirRecoveryLib.DummyPrinter (I)
+(* module Printer = MenhirRecoveryLib.MakePrinter ( *)
 (*    struct *)
 (*      module I = I *)
 (*      let print = Printf.printf "%s" *)
@@ -181,19 +181,20 @@ module Printer = Merlin_recovery.DummyPrinter (I)
 (*    end) *)
  
 module R =
-  Merlin_recovery.Make(I)
+  MenhirRecoveryLib.Make(I)
     (struct
       include Parser_recover
 
-      let default_value loc x =
-        Default.default_loc := loc;
-        default_value x
+(* FIXME *)
+      (* let default_value loc x = *)
+      (*   Default.default_loc := loc; *)
+      (*   default_value x *)
 
       let guide _ = false
       
       let use_indentation_heuristic = false
      end)
-    (Merlin_recovery.DummyPrinter (I))
+    (MenhirRecoveryLib.DummyPrinter (I))
 
 type 'a positioned = 'a * Lexing.position * Lexing.position
 

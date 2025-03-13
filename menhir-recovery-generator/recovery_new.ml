@@ -111,7 +111,7 @@ struct
 
     (* The set stores tuples of trace cost and nonterminal.
        The array stores traces where index is nonterminal id *)
-    type t = CostNtSet.t ref * Trace.t array
+    type _t = CostNtSet.t ref * Trace.t array
 
     let empty () = (
         ref CostNtSet.empty,
@@ -121,7 +121,7 @@ struct
     let is_empty (set, _) = CostNtSet.is_empty !set
 
     let get_min (set, arr) =
-      let (cost, nt) as elem = CostNtSet.min_elt !set in
+      let (_cost, nt) as elem = CostNtSet.min_elt !set in
       let i = Nonterminal.to_int nt in
       let res = nt, arr.(i) in
       set := CostNtSet.remove elem !set;
