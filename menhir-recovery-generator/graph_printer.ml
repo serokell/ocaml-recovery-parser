@@ -60,8 +60,8 @@ end = struct
         @ 
         List.map (fun pr ->
           (Fun.flip Print.production pr);
-        ) prods;
-      ) @@ Lr1.reductions lr in
+        ) [prods]; (* FIXME *)
+      ) @@ Lr1.get_reductions lr in
     print_table table ~header:"REDUCTIONS"
   
   let print graph_folder =

@@ -1,0 +1,13 @@
+; SPDX-FileCopyrightText: 2021 Serokell <https://serokell.io/>
+; SPDX-License-Identifier: MPL-2.0
+;
+; Copyright (c) 2019 Frédéric Bour
+; SPDX-License-Identifier: MIT
+
+
+(library
+ (name custom_compiler_libs)
+ (public_name ocaml-recovery-parser.custom_compiler_libs)
+ (wrapped true)
+ (modules Ast_helper Asttypes Docstrings Longident Parsetree
+          Pprintast  Syntaxerr Location))

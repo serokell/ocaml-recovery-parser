@@ -4,6 +4,8 @@
 ; Copyright (c) 2019 Frédéric Bour
 ; SPDX-License-Identifier: MIT
 
+;; Generator of recovery information
 (executable
- (name driver)
- (libraries recovery_parser merlin_recovery))
+ (name main)
+ (public_name menhir-recovery-generator)
+ (libraries fix menhirLib menhirSdk str))

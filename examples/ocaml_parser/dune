@@ -1,0 +1,29 @@
+; SPDX-FileCopyrightText: 2021 Serokell <https://serokell.io/>
+; SPDX-License-Identifier: MPL-2.0
+;
+; Copyright (c) 2019 Frédéric Bour
+; SPDX-License-Identifier: MIT
+
+(executable
+ (name driver)
+ (libraries menhirLib custom_compiler_libs menhirRecoveryLib))
+
+; (library
+;  (name recovery_parser)
+;  (wrapped false)
+;  (modules Raw_parser Raw_lexer Parser_recover)
+;  (libraries menhirLib custom_compiler_libs))
+
+(ocamllex raw_lexer)
+
+(menhir
+ (flags --strict --inspection --unused-tokens --table --cmly)
+ (modules raw_parser))
+
+(rule
+ (targets parser_recover.ml)
+ (deps raw_parser.cmly)
+ (action
+  (with-stdout-to
+   %{targets}
+   (run menhir-recovery-generator raw_parser.cmly))))
