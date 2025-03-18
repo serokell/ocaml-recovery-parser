@@ -75,7 +75,7 @@ let parse2 (s : String.t) : answer =
   let _ = M.Parser.expr_eof in
   let supplier = I.lexer_lexbuf_to_supplier M.Lexer.read lexbuf in
   let start_ch = M.Parser.Incremental.expr_eof lexbuf.lex_start_p in
-  R.loop_handle_recover (fun x -> Ok x) (fun _ -> Error) supplier start_ch
+  R.loop_handle_recover (fun x -> Ok x) (fun _ -> Error) (fun _ _ -> ()) supplier start_ch
 
 let%test_unit _ =
   [%test_eq: answer] (parse2 "2") (Ok (Int 2))

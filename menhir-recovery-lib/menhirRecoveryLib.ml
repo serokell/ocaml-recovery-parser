@@ -363,6 +363,9 @@ struct
     in
     { shifted; final; candidates = (candidate env) :: candidates }
 
+  (* TODO: simplify code blow: ['a step] is not needed if we would do recovery us
+     one step which though can consume more than one token at once.
+     [resume_cp] should be inlined *)
 
   type 'a step =
       CorrectCp of 'a Parser.checkpoint
@@ -370,30 +373,28 @@ struct
     | Success of 'a
     | RecoveryFailure of 'a Parser.checkpoint
 
-  let rec check_cp cp : ('a step, 'a Parser.checkpoint) result =
+  (** Repeat [resume] until we get succeeded, inputneeded or error *)
+  let rec resume_cp cp : ('a step, 'a Parser.checkpoint) result =
     match cp with
     | Parser.InputNeeded _ -> Ok (CorrectCp cp)
     | Parser.Accepted x -> Ok (Success x)
     | Parser.HandlingError _ | Parser.Rejected -> Error cp
-    | Parser.Shifting _ | Parser.AboutToReduce _  -> check_cp (Parser.resume cp)
+    | Parser.Shifting _ | Parser.AboutToReduce _  -> resume_cp (Parser.resume cp)
 
-  let loop_handle_recover
-      (success : 'a -> 'b)
-      (failure : 'a Parser.checkpoint -> 'b)
-      (supplier : unit -> Parser.token * Lexing.position * Lexing.position)
-      (start : 'a Parser.checkpoint)
-    : 'b
-    =
-    let try_recovery failure_cp candidates token : 'a step =
+  let assert_cp_is_InputNeeded = function
+    | Parser.InputNeeded _ -> ()
+    | _ -> Printer.print "Assert failed: cp is not InputNeeded"
+
+  let try_recovery failure_cp candidates token : 'a step =
       match attempt candidates token with
-        `Ok (Parser.InputNeeded _ as cp, _) -> CorrectCp cp
       | `Ok (cp, _) ->
-        Printer.print "Error recovery: impossible case\n";
-      RecoveryFailure cp
+        assert_cp_is_InputNeeded cp;
+        CorrectCp cp
       | `Accept v -> Success v
       | `Fail ->
         let token, _, _ = token in
         if not (Recovery.is_eof token) then
+          let () = Printer.print "Recover is not successful, then skip the token" in
           Recovering (failure_cp, candidates) (* proceed recovering with next token *)
         else
           match candidates.final with
@@ -401,14 +402,23 @@ struct
           | None ->
             Printer.print "Error recovery: no final candidate\n";
             RecoveryFailure failure_cp
-    in
+
+  let loop_handle_recover
+      (success : 'a -> 'b)
+      (fail    : 'a Parser.checkpoint -> 'b)
+      (log_error : 'a Parser.checkpoint -> 'a Parser.checkpoint -> unit)
+      (supplier : unit -> Parser.token * Lexing.position * Lexing.position)
+      (start : 'a Parser.checkpoint)
+    : 'b
+    =
     let step (parser : 'a step) token : 'a step =
       match parser with
-      | CorrectCp (Parser.InputNeeded env as cp) ->
-        begin match check_cp (Parser.offer cp token) with
+      | CorrectCp (Parser.InputNeeded env as inputneeded_cp) ->
+        begin match resume_cp (Parser.offer inputneeded_cp token) with
           | Ok step -> step
           | Error failure_cp ->
             Printer.print "Error recovery: SyntaxError found\n";
+            log_error inputneeded_cp failure_cp;
             let candidates = generate env in
             try_recovery failure_cp candidates token
       end
@@ -416,14 +426,15 @@ struct
         Printer.print "Error recovery: impossible case\n";
         RecoveryFailure cp
       | Recovering (failure_cp, candidates) ->
+        Printer.print "Try recovery again\n";
         try_recovery failure_cp candidates token
       | RecoveryFailure _ | Success _ as step -> step
     in
     let rec loop parser =
       let token = supplier () in
       begin match step parser token with
-        | Success v -> success v
-        | RecoveryFailure failure_cp -> failure failure_cp
+        | Success v          -> success v
+        | RecoveryFailure cp -> fail cp
         | CorrectCp _ | Recovering _ as st -> loop st
       end
     in loop (CorrectCp start)
