@@ -119,10 +119,20 @@ sig
   val generate : 'a Parser.env -> 'a candidates
 
 
+  (** Like Menhir's [loop_handler_undo] but with recovery.
+      Usage: [loop_handle_recover succeed fail log_error supplier checkpoint]
+      Starts parsing from [checkpoint]. When a syntax error happens
+      [log_error inputneeded_checkpoint fail_checkpoint] is called where the first
+      checkpoint is the last InputNeeded checkpoint before the error and the second
+      is checkpoint when the error detected. Then recovery algorithm tries to
+      resume parsing so [log_error] could be called multiple times if after
+      recovery a new syntax error happened. If the recovery fails the [fail] will be
+      called to produce result on /some/ checkpoint. Otherwise the [succed] is called. *)
   val loop_handle_recover :
-      ('a -> 'b) ->
-      ('a Parser.checkpoint -> 'b) ->
-      (unit -> Parser.token * Lexing.position * Lexing.position) ->
+      (* succeed: *)  ('a -> 'answer) ->
+      (* fail: *)     ('a Parser.checkpoint -> 'answer) ->
+      (* log_error: *)('a Parser.checkpoint -> 'a Parser.checkpoint -> unit) ->
+      (* supplier: *) (unit -> Parser.token * Lexing.position * Lexing.position) ->
       'a Parser.checkpoint ->
-      'b
+      'answer
 end
