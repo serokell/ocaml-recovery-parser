@@ -87,6 +87,8 @@ module type RECOVERY =
     val guide : 'a I.symbol -> bool
 
     val use_indentation_heuristic : bool
+
+    val is_eof : I.token -> bool
   end
 
 module Make
@@ -116,4 +118,11 @@ sig
 
   val generate : 'a Parser.env -> 'a candidates
 
+
+  val loop_handle_recover :
+      ('a -> 'b) ->
+      ('a Parser.checkpoint -> 'b) ->
+      (unit -> Parser.token * Lexing.position * Lexing.position) ->
+      'a Parser.checkpoint ->
+      'b
 end
