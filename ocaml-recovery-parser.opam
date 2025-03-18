@@ -12,5 +12,16 @@ license      : "MIT AND LGPL-2.1-only AND MPL-2.0"
 homepage     : "https://github.com/serokell/ocaml-recovery-parser"
 bug-reports  : "https://github.com/serokell/ocaml-recovery-parser/issues"
 # If you change the dependencies, run `opam lock` in the root
-depends      : ["dune" "base" "fix" "menhir"]
+depends      : [
+  "dune"
+  "base"
+  "fix"
+  "menhir"
+  "ppx_inline_test" {with-test}
+  "sexplib" {with-test}
+  "ocaml-lsp-server" {with-dev-setup}
+  "ocp-indent" {with-dev-setup}
+  "merlin" {with-dev-setup}
+  # odoc {with-doc}
+]
 build        : [["dune" "build" "-p" name]]
