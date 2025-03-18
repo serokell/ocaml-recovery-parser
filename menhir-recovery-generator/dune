@@ -7,5 +7,5 @@
 ;; Generator of recovery information
 (executable
  (name main)
- (public_name menhir-recovery-generator)
+ (public_name ocaml-recovery-parser.menhir-recovery-generator)
  (libraries fix menhirLib menhirSdk str))

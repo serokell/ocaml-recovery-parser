@@ -20,4 +20,4 @@
  (deps parser.cmly)
  (action
   (with-stdout-to recover.ml
-   (run menhir-recovery-generator parser.cmly))))
+   (run ocaml-recovery-parser.menhir-recovery-generator parser.cmly))))
