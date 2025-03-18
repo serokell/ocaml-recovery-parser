@@ -1,0 +1,5 @@
+(library
+ (name test_calc)
+ (inline_tests)
+ (libraries grammar)
+ (preprocess (pps ppx_inline_test ppx_assert ppx_sexp_conv ppx_compare)))

@@ -1,0 +1,23 @@
+
+(library
+ (name calc)
+ (modules parser lexer ast recover)
+ (libraries menhirLib menhirRecoveryLib sexplib)
+ (preprocess (pps ppx_sexp_conv ppx_compare))
+)
+
+(ocamllex
+ (modules lexer))
+
+(menhir
+ (modules parser)
+ (flags --table --inspection -v --strict --cmly)
+ (infer true)
+)
+
+(rule
+ (targets recover.ml)
+ (deps parser.cmly)
+ (action
+  (with-stdout-to recover.ml
+   (run menhir-recovery-generator parser.cmly))))
