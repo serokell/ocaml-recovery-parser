@@ -324,7 +324,7 @@ in
         fprintf ppf "  | N_%s -> true\n" (Nonterminal.mangled_name n)
     in
     fprintf ppf "let nullable (type a) : a MenhirInterpreter.nonterminal -> bool =\n\
-           \  let open MenhirInterpreter in function\n";
+           \  let open! MenhirInterpreter in function\n";
     Nonterminal.iter print_n;
     fprintf ppf "  | _ -> false\n\n"
 
