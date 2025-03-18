@@ -119,6 +119,8 @@ module type RECOVERY =
     val guide : 'a I.symbol -> bool
 
     val use_indentation_heuristic : bool
+
+    val is_eof : I.token -> bool
   end
 
 module Make
@@ -361,4 +363,68 @@ struct
     in
     { shifted; final; candidates = (candidate env) :: candidates }
 
+
+  type 'a step =
+      CorrectCp of 'a Parser.checkpoint
+    | Recovering of 'a Parser.checkpoint * 'a candidates
+    | Success of 'a
+    | RecoveryFailure of 'a Parser.checkpoint
+
+  let rec check_cp cp : ('a step, 'a Parser.checkpoint) result =
+    match cp with
+    | Parser.InputNeeded _ -> Ok (CorrectCp cp)
+    | Parser.Accepted x -> Ok (Success x)
+    | Parser.HandlingError _ | Parser.Rejected -> Error cp
+    | Parser.Shifting _ | Parser.AboutToReduce _  -> check_cp (Parser.resume cp)
+
+  let loop_handle_recover
+      (success : 'a -> 'b)
+      (failure : 'a Parser.checkpoint -> 'b)
+      (supplier : unit -> Parser.token * Lexing.position * Lexing.position)
+      (start : 'a Parser.checkpoint)
+    : 'b
+    =
+    let try_recovery failure_cp candidates token : 'a step =
+      match attempt candidates token with
+        `Ok (Parser.InputNeeded _ as cp, _) -> CorrectCp cp
+      | `Ok (cp, _) ->
+        Printer.print "Error recovery: impossible case\n";
+      RecoveryFailure cp
+      | `Accept v -> Success v
+      | `Fail ->
+        let token, _, _ = token in
+        if not (Recovery.is_eof token) then
+          Recovering (failure_cp, candidates) (* proceed recovering with next token *)
+        else
+          match candidates.final with
+          | Some v -> Success v
+          | None ->
+            Printer.print "Error recovery: no final candidate\n";
+            RecoveryFailure failure_cp
+    in
+    let step (parser : 'a step) token : 'a step =
+      match parser with
+      | CorrectCp (Parser.InputNeeded env as cp) ->
+        begin match check_cp (Parser.offer cp token) with
+          | Ok step -> step
+          | Error failure_cp ->
+            Printer.print "Error recovery: SyntaxError found\n";
+            let candidates = generate env in
+            try_recovery failure_cp candidates token
+      end
+      | CorrectCp cp ->
+        Printer.print "Error recovery: impossible case\n";
+        RecoveryFailure cp
+      | Recovering (failure_cp, candidates) ->
+        try_recovery failure_cp candidates token
+      | RecoveryFailure _ | Success _ as step -> step
+    in
+    let rec loop parser =
+      let token = supplier () in
+      begin match step parser token with
+        | Success v -> success v
+        | RecoveryFailure failure_cp -> failure failure_cp
+        | CorrectCp _ | Recovering _ as st -> loop st
+      end
+    in loop (CorrectCp start)
 end
