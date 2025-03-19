@@ -1,0 +1,53 @@
+name: Builds, tests & co
+
+on:
+  # - push
+  - pull_request
+
+permissions: read-all
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+
+        ocaml-compiler:
+          - 5.3
+          - 5.2
+          - 5.1
+          - 4.14
+          - 4.13
+          - 4.12
+          - 4.11
+
+        exclude:
+          - os: windows-latest
+            ocaml-compiler: 4.12
+          - os: windows-latest
+            ocaml-compiler: 4.11
+          - os: macos-latest
+            ocaml-compiler: 4.11
+
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout tree
+        uses: actions/checkout@v4
+
+      - name: Set-up OCaml
+        uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: ${{ matrix.ocaml-compiler }}
+
+      - run: opam install . --deps-only --with-test
+
+      - run: opam exec -- dune build
+
+      - run: opam exec -- dune runtest
+
