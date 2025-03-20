@@ -203,7 +203,7 @@ struct
         const bottom
       else if pos = prod_len then
         let can_reduce = List.exists
-            (fun (_,prods) -> List.mem prod [prods] (* FIXME *)) (Lr1.get_reductions st)
+            (fun (_,p) -> prod == p) (Lr1.get_reductions st)
         in
         const (if can_reduce
                then (cost_of_prod prod, [Reduce prod])
