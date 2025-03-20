@@ -170,6 +170,7 @@ let dump_tokens tokens =
 module P = Raw_parser
 module I = P.MenhirInterpreter
 module Printer = MenhirRecoveryLib.DummyPrinter (I)
+(* For debug *)
 (* module Printer = MenhirRecoveryLib.MakePrinter ( *)
 (*    struct *)
 (*      module I = I *)
@@ -185,14 +186,15 @@ module R =
     (struct
       include Parser_recover
 
-(* FIXME *)
-      (* let default_value loc x = *)
-      (*   Default.default_loc := loc; *)
-      (*   default_value x *)
+      let default_value loc x =
+        Default.default_loc := loc;
+        default_value loc x
 
       let guide _ = false
       
       let use_indentation_heuristic = false
+
+      let is_eof = function Raw_parser.EOF -> true | _ -> false
      end)
     (MenhirRecoveryLib.DummyPrinter (I))
 

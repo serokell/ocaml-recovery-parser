@@ -62,8 +62,7 @@ let () =
               (st' :> int)
           ) (Lr1.transitions st);
         fprintf ppf "Reductions:\n";
-        List.iter (fun (t,ps) ->
-            let p : production = List.hd [ps] in (* FIXME *)
+        List.iter (fun (t, (p : production)) ->
             fprintf ppf " - on %a, reduce %d:\n  %a\n"
               Print.terminal t
               (p :> int) Print.production p

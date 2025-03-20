@@ -6,7 +6,7 @@
 
 (executable
  (name driver)
- (libraries menhirLib custom_compiler_libs menhirRecoveryLib))
+ (libraries menhirLib custom_compiler_libs ocaml-recovery-parser.menhirRecoveryLib))
 
 ; (library
 ;  (name recovery_parser)
@@ -26,4 +26,4 @@
  (action
   (with-stdout-to
    %{targets}
-   (run menhir-recovery-generator raw_parser.cmly))))
+   (run ocaml-recovery-parser.menhir-recovery-generator raw_parser.cmly))))

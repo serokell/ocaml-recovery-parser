@@ -53,14 +53,10 @@ end = struct
       ) @@ Lr1.transitions lr in
     print_table table ~header:"TRANSITIONS"
 
-  let print_reductions lr = 
-    let table = 
-      List.map (fun (terminal, prods) ->
-        [Fun.flip Print.terminal terminal]
-        @ 
-        List.map (fun pr ->
-          (Fun.flip Print.production pr);
-        ) [prods]; (* FIXME *)
+  let print_reductions lr =
+    let table =
+      List.map (fun (terminal, prod) ->
+        [Fun.flip Print.terminal terminal; Fun.flip Print.production prod]
       ) @@ Lr1.get_reductions lr in
     print_table table ~header:"REDUCTIONS"
   

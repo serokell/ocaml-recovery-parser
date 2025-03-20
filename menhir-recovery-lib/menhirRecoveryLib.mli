@@ -127,7 +127,7 @@ sig
       is checkpoint when the error detected. Then recovery algorithm tries to
       resume parsing so [log_error] could be called multiple times if after
       recovery a new syntax error happened. If the recovery fails the [fail] will be
-      called to produce result on /some/ checkpoint. Otherwise the [succed] is called. *)
+      called to produce result on /some/ checkpoint. Otherwise the [succeed] is called. *)
   val loop_handle_recover :
       (* succeed: *)  ('a -> 'answer) ->
       (* fail: *)     ('a Parser.checkpoint -> 'answer) ->
